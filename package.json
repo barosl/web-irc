@@ -4,7 +4,7 @@
     "description": "HTML5 chat client using WebSocket",
     "devDependencies": {
         "gulp": "*",
-        "gulp-watch": "*",
+        "gulp-newer": "*",
         "gulp-plumber": "*",
         "gulp-coffee": "*",
         "gulp-less": "*"
