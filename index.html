@@ -1,0 +1,37 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>Chat Client</title>
+    <link rel="stylesheet" href="build/css/base.css">
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="cfg.js"></script>
+    <script src="build/js/main.js"></script>
+    <!-- For AngularJS -->
+    <!--[if lte IE 7]>
+    <script src="bower_components/json3/lib/json3.min.js"></script>
+    <script>var ie_7 = true;</script>
+    <![endif]-->
+    <!-- For WebSocket -->
+    <!--[if lte IE 9]>
+    <script src="bower_components/web-socket-js/swfobject.js"></script>
+    <script src="bower_components/web-socket-js/web_socket.js"></script>
+    <script>var WEB_SOCKET_SWF_LOCATION = 'bower_components/web-socket-js/WebSocketMain.swf';</script>
+    <![endif]-->
+</head>
+<body id="ng-app" ng-app="chat" ng-controller="ChatCtrl">
+    <div id="chat-header">
+        <a href="#" id="users-link">{{ users.length }} users</a>
+        <div id="users">
+            <p ng-repeat="user in users">{{ user }}</p>
+        </div>
+    </div>
+    <div id="chat-body">
+        <p ng-repeat="msg in msgs track by $index">{{ msg }}</p>
+    </div>
+    <div id="chat-footer">
+        <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">
+        <span class="fill"><input type="text" id="chat-input"></span>
+    </div>
+</body>

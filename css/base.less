@@ -1,0 +1,54 @@
+@spacing: 0;
+@padding: 10px;
+@bar-height: 30px;
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+}
+
+body {
+    padding: @spacing;
+}
+
+#chat-nick { float: left; }
+#chat-footer .fill { display: block; overflow: hidden; padding-right: (@spacing+@padding)*2 + 6px; }
+#chat-input { float: left; width: 100%; }
+
+#chat-nick {
+    width: 100px;
+    margin-right: 5px;
+}
+
+#chat-header {
+    position: fixed;
+    width: 100%;
+    height: @bar-height;
+    background-color: white;
+
+    top: @spacing;
+    padding: @padding;
+}
+
+#chat-footer {
+    position: fixed;
+    width: 100%;
+    height: @bar-height;
+    background-color: white;
+
+    bottom: @spacing;
+    padding: @padding;
+}
+
+#chat-body {
+    padding: @bar-height+(@spacing+@padding)*2 @padding;
+}
+
+#users {
+    display: none;
+    background-color: white;
+    border: 1px solid black;
+    padding: 10px;
+    margin-top: 10px;
+}

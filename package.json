@@ -1,0 +1,12 @@
+{
+    "name": "barosl-chat-client",
+    "version": "0.1.0",
+    "description": "HTML5 chat client using WebSocket",
+    "devDependencies": {
+        "gulp": "*",
+        "gulp-watch": "*",
+        "gulp-plumber": "*",
+        "gulp-coffee": "*",
+        "gulp-less": "*"
+    }
+}
