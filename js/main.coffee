@@ -2,7 +2,7 @@ RECONN_SECS = 5
 
 angular.module 'chat', []
     .config ($sceProvider) ->
-        if typeof ie_7 != 'undefined' then $sceProvider.enabled false
+        $sceProvider.enabled false if ie_7?
 
     .controller 'ChatCtrl', ($scope) ->
         $scope.connected = false
