@@ -28,7 +28,7 @@ $ ->
         sock.onclose = (ev) ->
             $scope.$apply -> $scope.connected = false
 
-            add_msg 'Connection closed. Reconnecting in '+RECONN_SECS+' seconds (Error code: '+ev.code+')'
+            add_msg "Connection closed. Reconnecting in #{RECONN_SECS} seconds (Error code: #{ev.code})"
 
             setTimeout ->
                 conn()
@@ -51,7 +51,7 @@ $ ->
             else if cmd == 'msgs'
                 set_msgs JSON.parse msg
             else
-                add_msg 'Unknown command: '+ev.data
+                add_msg "Unknown command: #{ev.data}"
 
     $('#chat-input').keydown (ev) ->
         if ev.which != 13 or ev.target.value == '' then return
@@ -65,7 +65,7 @@ $ ->
             add_msg 'Not connected'
             return
 
-        sock.send 'msg: '+msg
+        sock.send "msg: #{msg}"
 
     $('#chat-nick').keydown (ev) ->
         if ev.which != 13 or $scope.nick == user.nick then return
@@ -76,7 +76,7 @@ $ ->
             $('#chat-input').focus()
             return
 
-        sock.send 'nick: '+$scope.nick
+        sock.send "nick: #{$scope.nick}"
 
         $scope.$apply -> $scope.nick = user.nick
 
