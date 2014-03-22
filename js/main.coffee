@@ -51,7 +51,7 @@ $ ->
                 else if 'users' of data
                     $scope.$apply -> $scope.users = data.users
                 else if 'msgs' of data
-                    set_msgs data.msgs
+                    add_msgs data.msgs
                 else
                     throw new SyntaxError 'Invalid message type'
 
@@ -96,8 +96,8 @@ $ ->
         $scope.$apply -> $scope.msgs.push type: type, msg: msg
         window.scrollTo 0, document.body.scrollHeight
 
-    set_msgs = (msgs) ->
-        $scope.$apply -> $scope.msgs = (type: 'normal', msg: x for x in msgs)
+    add_msgs = (msgs) ->
+        $scope.$apply -> Array::push.apply $scope.msgs, (type: 'normal', msg: x for x in msgs)
         window.scrollTo 0, document.body.scrollHeight
 
     conn()
