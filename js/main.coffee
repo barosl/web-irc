@@ -123,6 +123,8 @@ $ ->
 
         localStorage.chat_nick = $scope.nick
 
+        localStorage.update() if ie_7?
+
         $('#chat-input').focus()
 
     $('#users-link').click (ev) ->
