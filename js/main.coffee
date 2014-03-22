@@ -18,6 +18,10 @@ $ ->
 
     send = (data) -> sock.send JSON.stringify data
 
+    set_nick = (nick) ->
+        set_nick.desired_nick = nick
+        send nick: nick
+
     conn = ->
         sock = new WebSocket cfg.url
 
@@ -27,7 +31,7 @@ $ ->
             add_msg 'Successfully connected', 'info'
 
             nick = localStorage.chat_nick ? ''
-            send nick: nick
+            set_nick nick
             $scope.$apply -> $scope.nick = nick
 
         sock.onclose = (ev) ->
@@ -47,11 +51,13 @@ $ ->
                     add_msg data.msg
                 else if 'nick' of data
                     user.nick = data.nick
-                    localStorage.chat_nick = user.nick
                     $scope.$apply -> $scope.nick = user.nick
                 else if 'err' of data
                     $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
                     add_msg data.err, 'err'
+
+                    if data.err == 'Nickname already in use'
+                        set_nick set_nick.desired_nick+'+'
                 else if 'users' of data
                     $scope.$apply -> $scope.users = data.users
                 else if 'msgs' of data
@@ -82,13 +88,13 @@ $ ->
         ev.preventDefault()
 
         if $scope.nick == ''
-            $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
+            $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick ? ''
             $('#chat-input').focus()
             return
 
-        send nick: $scope.nick
+        set_nick $scope.nick
 
-        $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
+        localStorage.chat_nick = $scope.nick
 
         $('#chat-input').focus()
 
