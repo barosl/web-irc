@@ -19,3 +19,9 @@ this.localStorage ?= do ->
     data.update = -> write_ck 'localStorage', (JSON.stringify data), 3650
 
     return data
+
+this.console ?= do ->
+    obj = {}
+    for name in ['log', 'error', 'info', 'warn']
+        obj[name] = ->
+    return obj
