@@ -1,20 +1,27 @@
 RECONN_SECS = 5
+DEFAULT_CHAN = '#default'
 
 angular.module 'chat', []
     .config ($sceProvider) ->
         $sceProvider.enabled false if ie_7?
 
     .controller 'ChatCtrl', ($scope) ->
-        $scope.connected = false
-        $scope.nick = ''
-        $scope.users = []
+        $scope.init = ->
+            $scope.connected = false
+            $scope.nick = ''
+            $scope.users = []
+        $scope.init()
+
         $scope.msgs = []
 
 $ ->
     $scope = angular.element($('body')).scope()
 
-    sock = null
-    user = {}
+    [sock, user] = []
+    init = ->
+        sock = null
+        user = {}
+    init()
 
     send = (data) -> sock.send JSON.stringify data
 
@@ -35,7 +42,7 @@ $ ->
             $scope.$apply -> $scope.nick = nick
 
         sock.onclose = (ev) ->
-            $scope.$apply -> $scope.connected = false
+            $scope.$apply -> $scope.init()
 
             add_msg "Connection closed. Reconnecting in #{RECONN_SECS} seconds (Error code: #{ev.code})", 'err'
 
@@ -50,6 +57,8 @@ $ ->
                 if 'msg' of data
                     add_msg data.msg
                 else if 'nick' of data
+                    if not user.nick?
+                        send join: DEFAULT_CHAN
                     user.nick = data.nick
                     $scope.$apply -> $scope.nick = user.nick
                 else if 'err' of data
@@ -62,6 +71,12 @@ $ ->
                     $scope.$apply -> $scope.users = data.users
                 else if 'msgs' of data
                     add_msgs data.msgs
+                else if 'join' of data
+                    add_msg "#{data.user} has joined #{data.join}", 'info'
+                else if 'part' of data
+                    add_msg "#{data.user} has parted #{data.part}", 'info'
+                    if data.user == user.nick
+                        $scope.$apply -> $scope.users = []
                 else
                     throw new SyntaxError 'Invalid message type'
 
@@ -81,7 +96,12 @@ $ ->
             add_msg 'Not connected', 'err'
             return
 
-        send msg: msg
+        if msg == '/join'
+            send join: DEFAULT_CHAN
+        else if msg == '/part'
+            send part: DEFAULT_CHAN
+        else
+            send msg: msg, chan: DEFAULT_CHAN
 
     $('#chat-nick').keydown (ev) ->
         if ev.which != 13 or $scope.nick == (user.nick ? null) then return
