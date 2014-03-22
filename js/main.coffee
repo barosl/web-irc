@@ -115,10 +115,12 @@ $ ->
         if ev.which != 13 or $scope.nick == (user.nick ? null) then return
         ev.preventDefault()
 
+        ###
         if $scope.nick == ''
             $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick ? ''
             $('#chat-input').focus()
             return
+        ###
 
         set_nick $scope.nick
 
