@@ -14,8 +14,7 @@ $ ->
     $scope = angular.element($('body')).scope()
 
     sock = null
-    user =
-        nick: ''
+    user = {}
 
     send = (data) -> sock.send JSON.stringify data
 
@@ -26,6 +25,10 @@ $ ->
             $scope.$apply -> $scope.connected = true
 
             add_msg 'Successfully connected', 'info'
+
+            nick = localStorage.chat_nick ? ''
+            send nick: nick
+            $scope.$apply -> $scope.nick = nick
 
         sock.onclose = (ev) ->
             $scope.$apply -> $scope.connected = false
@@ -44,9 +47,10 @@ $ ->
                     add_msg data.msg
                 else if 'nick' of data
                     user.nick = data.nick
+                    localStorage.chat_nick = user.nick
                     $scope.$apply -> $scope.nick = user.nick
                 else if 'err' of data
-                    $scope.$apply -> $scope.nick = user.nick
+                    $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
                     add_msg data.err, 'err'
                 else if 'users' of data
                     $scope.$apply -> $scope.users = data.users
@@ -74,17 +78,17 @@ $ ->
         send msg: msg
 
     $('#chat-nick').keydown (ev) ->
-        if ev.which != 13 or $scope.nick == user.nick then return
+        if ev.which != 13 or $scope.nick == (user.nick ? null) then return
         ev.preventDefault()
 
         if $scope.nick == ''
-            $scope.$apply -> $scope.nick = user.nick
+            $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
             $('#chat-input').focus()
             return
 
         send nick: $scope.nick
 
-        $scope.$apply -> $scope.nick = user.nick
+        $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
 
         $('#chat-input').focus()
 
