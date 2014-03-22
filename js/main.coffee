@@ -1,5 +1,6 @@
 RECONN_SECS = 5
-DEFAULT_CHAN = '#default'
+DEFAULT_CHAN = if mat = /[?&]chan=([^&]+)/.exec location.search then '#'+mat[1] else '#default'
+VERBOSE = /[?&]verbose=(true|1)&?/.test location.search
 
 angular.module 'chat', []
     .config ($sceProvider) ->
@@ -60,7 +61,7 @@ $ ->
                     if not user.nick?
                         send join: DEFAULT_CHAN
                     if data.user
-                        add_msg "#{data.user} is now known as #{data.nick}", 'info'
+                        if VERBOSE then add_msg "#{data.user} is now known as #{data.nick}", 'info'
                         $scope.$apply ->
                             pos = $scope.users.indexOf data.user
                             if pos == -1 then console.error 'Unable to find user in user list'
@@ -79,9 +80,9 @@ $ ->
                 else if 'msgs' of data
                     add_msgs data.msgs
                 else if 'join' of data
-                    add_msg "#{data.user} has joined #{data.join}", 'info'
+                    if VERBOSE then add_msg "#{data.user} has joined #{data.join}", 'info'
                 else if 'part' of data
-                    add_msg "#{data.user} has parted #{data.part}", 'info'
+                    if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
                     if data.user == user.nick
                         $scope.$apply -> $scope.users = []
                 else
