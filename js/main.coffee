@@ -25,12 +25,12 @@ $ ->
         sock.onopen = (ev) ->
             $scope.$apply -> $scope.connected = true
 
-            add_msg 'Successfully connected'
+            add_msg 'Successfully connected', 'info'
 
         sock.onclose = (ev) ->
             $scope.$apply -> $scope.connected = false
 
-            add_msg "Connection closed. Reconnecting in #{RECONN_SECS} seconds (Error code: #{ev.code})"
+            add_msg "Connection closed. Reconnecting in #{RECONN_SECS} seconds (Error code: #{ev.code})", 'err'
 
             setTimeout ->
                 conn()
@@ -47,7 +47,7 @@ $ ->
                     $scope.$apply -> $scope.nick = user.nick
                 else if 'err' of data
                     $scope.$apply -> $scope.nick = user.nick
-                    add_msg data.err
+                    add_msg data.err, 'err'
                 else if 'users' of data
                     $scope.$apply -> $scope.users = data.users
                 else if 'msgs' of data
@@ -56,7 +56,7 @@ $ ->
                     throw new SyntaxError 'Invalid message type'
 
             catch e
-                add_msg 'Invalid server response'
+                add_msg 'Invalid server response', 'err'
                 console.log "Invalid server response: #{ev.data}"
 
     $('#chat-input').keydown (ev) ->
@@ -68,7 +68,7 @@ $ ->
         if not msg then return
 
         if not $scope.connected
-            add_msg 'Not connected'
+            add_msg 'Not connected', 'err'
             return
 
         send msg: msg
@@ -92,12 +92,12 @@ $ ->
         ev.preventDefault()
         $('#users').toggle()
 
-    add_msg = (msg) ->
-        $scope.$apply -> $scope.msgs.push msg
+    add_msg = (msg, type='normal') ->
+        $scope.$apply -> $scope.msgs.push type: type, msg: msg
         window.scrollTo 0, document.body.scrollHeight
 
     set_msgs = (msgs) ->
-        $scope.$apply -> $scope.msgs = msgs
+        $scope.$apply -> $scope.msgs = (type: 'normal', msg: x for x in msgs)
         window.scrollTo 0, document.body.scrollHeight
 
     conn()

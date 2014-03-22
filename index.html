@@ -28,7 +28,7 @@
         </div>
     </div>
     <div id="chat-body">
-        <p ng-repeat="msg in msgs track by $index">{{ msg }}</p>
+        <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}">{{ msg.msg }}</p>
     </div>
     <div id="chat-footer">
         <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">
