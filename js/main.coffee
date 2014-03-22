@@ -15,7 +15,7 @@ angular.module 'chat', []
         $scope.msgs = []
 
 $ ->
-    $scope = angular.element($('body')).scope()
+    $scope = angular.element('#chat').scope()
 
     [sock, user] = []
     init = ->
@@ -127,17 +127,17 @@ $ ->
 
         $('#chat-input').focus()
 
-    $('#users-link').click (ev) ->
+    $('#chat-users-butt').click (ev) ->
         ev.preventDefault()
-        $('#users').toggle()
+        $('#chat-users').toggle()
 
     add_msg = (msg, type='normal') ->
         $scope.$apply -> $scope.msgs.push type: type, msg: msg
-        window.scrollTo 0, document.body.scrollHeight
+        ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
 
     add_msgs = (msgs) ->
         $scope.$apply -> Array::push.apply $scope.msgs, (type: 'normal', msg: x for x in msgs)
-        window.scrollTo 0, document.body.scrollHeight
+        ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
 
     conn()
     $('#chat-input').focus()

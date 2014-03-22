@@ -22,17 +22,20 @@
     <![endif]-->
 </head>
 <body id="ng-app" ng-app="chat" ng-controller="ChatCtrl">
-    <div id="chat-header">
-        <a href="#" id="users-link">{{ users.length }} users</a>
-        <div id="users">
+    <div id="chat">
+        <div id="chat-header">
+            <a href="#" id="chat-users-butt">{{ users.length }} users</a>
+        </div>
+        <div id="chat-body">
+            <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}">{{ msg.msg }}</p>
+        </div>
+        <div id="chat-footer">
+            <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">
+            <span class="fill"><input type="text" id="chat-input"></span>
+        </div>
+
+        <div id="chat-users">
             <p ng-repeat="user in users">{{ user }}</p>
         </div>
-    </div>
-    <div id="chat-body">
-        <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}">{{ msg.msg }}</p>
-    </div>
-    <div id="chat-footer">
-        <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">
-        <span class="fill"><input type="text" id="chat-input"></span>
     </div>
 </body>
