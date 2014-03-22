@@ -59,8 +59,15 @@ $ ->
                 else if 'nick' of data
                     if not user.nick?
                         send join: DEFAULT_CHAN
-                    user.nick = data.nick
-                    $scope.$apply -> $scope.nick = user.nick
+                    if data.user
+                        add_msg "#{data.user} is now known as #{data.nick}", 'info'
+                        $scope.$apply ->
+                            pos = $scope.users.indexOf data.user
+                            if pos == -1 then console.error 'Unable to find user in user list'
+                            else $scope.users[pos] = data.nick
+                    else
+                        user.nick = data.nick
+                        $scope.$apply -> $scope.nick = user.nick
                 else if 'err' of data
                     $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
                     add_msg data.err, 'err'
