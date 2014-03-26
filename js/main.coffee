@@ -52,9 +52,12 @@ $ ->
             , RECONN_SECS*1000
 
         sock.onmessage = (ev) ->
-            try
-                data = JSON.parse ev.data
+            err = false
 
+            try data = JSON.parse ev.data
+            catch then err = true
+
+            if not err
                 if 'msg' of data
                     add_msg data.msg
                 else if 'nick' of data
@@ -85,10 +88,9 @@ $ ->
                     if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
                     if data.user == user.nick
                         $scope.$apply -> $scope.users = []
-                else
-                    throw new SyntaxError 'Invalid message type'
+                else err = true
 
-            catch e
+            if err
                 add_msg 'Invalid server response', 'err'
                 console.log "Invalid server response: #{ev.data}"
 
