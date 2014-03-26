@@ -74,7 +74,7 @@ $ ->
                     add_msg data.err, 'err'
 
                     if data.err == 'Nickname already in use'
-                        set_nick set_nick.desired_nick+'+'
+                        set_nick set_nick.desired_nick+~~(Math.random()*10)
                 else if 'users' of data
                     $scope.$apply -> $scope.users = data.users
                 else if 'msgs' of data
