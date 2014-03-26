@@ -90,6 +90,8 @@ $ ->
                     if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
                     if data.user == user.nick
                         $scope.$apply -> $scope.users = []
+                else if 'reload' of data
+                    location.reload true
                 else err = true
 
             if err
