@@ -31,8 +31,8 @@
             <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}" ng-bind-html="msg.msg | linky:'_blank'"></p>
         </div>
         <div id="chat-footer">
-            <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">
-            <span class="fill"><input type="text" id="chat-input"></span>
+            <input type="text" id="chat-nick" placeholder="Nickname" ng-model="nick" ng-disabled="!connected">
+            <span class="fill"><input type="text" id="chat-input" placeholder="Message"></span>
         </div>
 
         <div id="chat-users">
