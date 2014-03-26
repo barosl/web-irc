@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="build/css/base.css">
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
     <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.min.js"></script>
     <script src="cfg.js"></script>
     <script src="build/js/main.js"></script>
     <!-- For AngularJS -->
@@ -27,7 +28,7 @@
             <a href="#" id="chat-users-butt">{{ users.length }} users</a>
         </div>
         <div id="chat-body">
-            <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}">{{ msg.msg }}</p>
+            <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}" ng-bind-html="msg.msg | linky:'_blank'"></p>
         </div>
         <div id="chat-footer">
             <input type="text" id="chat-nick" ng-model="nick" ng-disabled="!connected">

@@ -6,6 +6,7 @@
         "jquery": "1.x",
         "angular": "*",
         "web-socket-js": "*",
-        "json3": "*"
+        "json3": "*",
+        "angular-sanitize": "*"
     }
 }

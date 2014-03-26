@@ -2,7 +2,7 @@ RECONN_SECS = 5
 DEFAULT_CHAN = if mat = /[?&]chan=([^&]+)/.exec location.search then '#'+mat[1] else '#default'
 VERBOSE = /[?&]verbose=(true|1)&?/.test location.search
 
-angular.module 'chat', []
+angular.module 'chat', ['ngSanitize']
     .config ($sceProvider) ->
         $sceProvider.enabled false if ie_7?
 
