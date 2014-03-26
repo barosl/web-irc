@@ -11,7 +11,6 @@ angular.module 'chat', ['ngSanitize']
             $scope.connected = false
             $scope.nick = ''
             $scope.users = []
-        $scope.init()
 
         $scope.msgs = []
 
@@ -22,6 +21,8 @@ $ ->
     init = ->
         sock = null
         user = {}
+
+        $scope.$apply -> $scope.init()
     init()
 
     send = (data) -> sock.send JSON.stringify data
@@ -43,7 +44,7 @@ $ ->
             $scope.$apply -> $scope.nick = nick
 
         sock.onclose = (ev) ->
-            $scope.$apply -> $scope.init()
+            init()
 
             add_msg "Connection closed. Reconnecting in #{RECONN_SECS} seconds (Error code: #{ev.code})", 'err'
 
