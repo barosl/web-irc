@@ -140,13 +140,18 @@ $ ->
         ev.preventDefault()
         $('#chat-users').toggle()
 
+    is_bottom = -> ((x) -> x.scrollTop + $(x).outerHeight() == x.scrollHeight) $('#chat-body')[0]
+    scroll = -> ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
+
     add_msg = (msg, type='normal') ->
+        flag = is_bottom()
         $scope.$apply -> $scope.msgs.push type: type, msg: msg
-        ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
+        if flag then scroll()
 
     add_msgs = (msgs) ->
+        flag = is_bottom()
         $scope.$apply -> Array::push.apply $scope.msgs, (type: 'normal', msg: x for x in msgs)
-        ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
+        if flag then scroll()
 
     conn()
     $('#chat-input').focus()
