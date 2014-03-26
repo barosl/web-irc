@@ -66,6 +66,7 @@ $ ->
                         send join: DEFAULT_CHAN
                     if data.user
                         if VERBOSE then add_msg "#{data.user} is now known as #{data.nick}", 'info'
+                        else add_msg "#{data.user} -> #{data.nick}", 'info'
                         $scope.$apply ->
                             pos = $scope.users.indexOf data.user
                             if pos == -1 then console.error 'Unable to find user in user list'
