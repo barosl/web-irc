@@ -2,6 +2,14 @@ RECONN_SECS = 5
 DEFAULT_CHAN = if mat = /[?&]chan=([^&]+)/.exec location.search then '#'+mat[1] else '#default'
 VERBOSE = /[?&]verbose=(true|1)&?/.test location.search
 
+sortedIndex = (arr, val) ->
+    low = 0
+    high = arr.length
+    while low < high
+        mid = (low + high) >>> 1
+        if arr[mid] < val then low = mid + 1 else high = mid
+    return low
+
 angular.module 'chat', ['ngSanitize']
     .config ($sceProvider) ->
         $sceProvider.enabled false if ie_7?
@@ -69,8 +77,11 @@ $ ->
                         else add_msg "#{data.user} -> #{data.nick}", 'info'
                         $scope.$apply ->
                             pos = $scope.users.indexOf data.user
-                            if pos == -1 then console.error 'Unable to find user in user list'
-                            else $scope.users[pos] = data.nick
+                            if ~pos
+                                $scope.users[pos..pos] = []
+                                idx = sortedIndex($scope.users, data.nick)
+                                $scope.users[idx...idx] = [data.nick]
+                            else console.error 'Unable to find the user in the user list'
                     else
                         user.nick = data.nick
                         $scope.$apply -> $scope.nick = user.nick
@@ -81,14 +92,25 @@ $ ->
                     if data.err == 'Nickname already in use'
                         set_nick set_nick.desired_nick+~~(Math.random()*10)
                 else if 'users' of data
-                    $scope.$apply -> $scope.users = data.users
+                    $scope.$apply ->
+                        $scope.users = data.users
+                        $scope.users.sort()
                 else if 'msgs' of data
                     add_msgs data.msgs
                 else if 'join' of data
                     if VERBOSE then add_msg "#{data.user} has joined #{data.join}", 'info'
+                    if data.user != user.nick
+                        $scope.$apply ->
+                            idx = sortedIndex($scope.users, data.user)
+                            $scope.users[idx...idx] = [data.user]
                 else if 'part' of data
                     if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
-                    if data.user == user.nick
+                    if data.user != user.nick
+                        $scope.$apply ->
+                            pos = $scope.users.indexOf data.user
+                            if ~pos then $scope.users[pos..pos] = []
+                            else console.error 'Unable to find the user in the user list'
+                    else
                         $scope.$apply -> $scope.users = []
                 else if 'reload' of data
                     location.reload true
