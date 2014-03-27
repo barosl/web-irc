@@ -25,3 +25,15 @@ this.console ?= do ->
     for name in ['log', 'error', 'info', 'warn']
         obj[name] = ->
     return obj
+
+Array.prototype.indexOf ?= (el, from_idx) ->
+    length = this.length
+    from_idx = ~~from_idx
+
+    if from_idx < 0 then from_idx += length
+
+    while from_idx < length
+        if this[from_idx] == el then return from_idx
+        from_idx++
+
+    return -1
