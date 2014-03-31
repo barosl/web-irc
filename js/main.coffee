@@ -101,7 +101,7 @@ $ ->
             update_user_cnt()
 
     on_part = (ev) ->
-        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has parted #{ev.chan} (Reason: #{ev.reason})", 'info'
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has parted #{ev.chan} (Reason: #{ev.reason})", 'warn'
 
         if ev.nick != irc.nick
             pos = users.indexOf ev.nick
@@ -116,7 +116,7 @@ $ ->
             update_user_cnt()
 
     on_quit = (ev) ->
-        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has quited (Reason: #{ev.reason})", 'info'
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has quited (Reason: #{ev.reason})", 'warn'
 
         if ev.nick != irc.nick
             pos = users.indexOf ev.nick
@@ -131,7 +131,7 @@ $ ->
             update_user_cnt()
 
     on_kick = (ev) ->
-        add_msg "#{ev.nick} has kicked #{ev.target} (Reason: #{ev.reason})", 'info'
+        add_msg "#{ev.nick} has kicked #{ev.target} (Reason: #{ev.reason})", 'err'
 
         if ev.target != irc.nick
             pos = users.indexOf ev.target
