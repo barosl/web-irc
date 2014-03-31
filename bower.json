@@ -1,7 +1,7 @@
 {
-    "name": "barosl-chat-client",
+    "name": "web-irc",
     "version": "0.1.0",
-    "description": "HTML5 chat client using WebSocket",
+    "description": "Web-based IRC client using WebSocket",
     "dependencies": {
         "jquery": "1.x",
         "angular": "*",
