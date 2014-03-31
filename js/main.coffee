@@ -11,10 +11,21 @@ sortedIndex = (arr, val) ->
     return low
 
 $ ->
-    [sock, user, connected, users] = []
+    [sock, connected, users, irc] = []
     init = ->
         sock = null
-        user = {}
+
+        irc = new irclib.IRC (line) -> sock.send line + '\n'
+        irc.add_handlers
+            welcome: on_welcome
+            nick: on_nick
+            join: on_join
+            part: on_part
+            quit: on_quit
+            kick: on_kick
+            users: on_users
+            msg: on_msg
+            err: on_err
 
         connected = false
         $('#chat-nick').prop 'disabled', true
@@ -26,11 +37,9 @@ $ ->
     chat_body_el = $('#chat-body')[0]
     chat_users_butt_el = $('#chat-users-butt')[0]
 
-    send = (data) -> sock.send JSON.stringify data
-
     set_nick = (nick) ->
         set_nick.desired_nick = nick
-        send nick: nick
+        irc.set_nick nick
 
     conn = ->
         sock = new WebSocket cfg.url
@@ -41,7 +50,9 @@ $ ->
 
             add_msg 'Successfully connected', 'info'
 
-            nick = localStorage.chat_nick ? ''
+            irc.user 'web-irc', 'WebIRC Lee'
+
+            nick = if localStorage.chat_nick then localStorage.chat_nick else 'User'
             set_nick nick
             $('#chat-nick').val nick
 
@@ -55,81 +66,109 @@ $ ->
             , RECONN_SECS*1000
 
         sock.onmessage = (ev) ->
-            err = false
+            irc.parse ev.data
 
-            try data = JSON.parse ev.data
-            catch then err = true
+    on_welcome = ->
+        $('#chat-nick').val irc.nick
 
-            if not err
-                if 'msg' of data
-                    add_msg data.msg
-                else if 'nick' of data
-                    if not user.nick?
-                        send join: DEFAULT_CHAN
-                    if data.user
-                        if VERBOSE then add_msg "#{data.user} is now known as #{data.nick}", 'info'
-                        else add_msg "#{data.user} -> #{data.nick}", 'info'
+        irc.join DEFAULT_CHAN
 
-                        pos = users.indexOf data.user
-                        if ~pos
-                            users[pos..pos] = []
-                            remove_el pos, '#chat-users p'
+    on_nick = (ev) ->
+        if VERBOSE then add_msg "#{ev.nick} is now known as #{ev.new_nick}", 'info'
+        else add_msg "#{ev.nick} -> #{ev.new_nick}", 'info'
 
-                            idx = sortedIndex users, data.nick
+        pos = users.indexOf ev.nick
+        if ~pos
+            users[pos..pos] = []
+            el = detach_el pos, '#chat-users p'
 
-                            insert_el idx, '#chat-users p', users, get_user_el data.nick
-                            users[idx...idx] = [data.nick]
-                            update_user_cnt()
-                        else console.error 'Unable to find the user in the user list'
-                    else
-                        user.nick = data.nick
-                        $('#chat-nick').val user.nick
-                else if 'err' of data
-                    $('#chat-nick').val user.nick ? localStorage.chat_nick
-                    add_msg data.err, 'err'
+            idx = sortedIndex users, ev.new_nick
 
-                    if data.err == 'Nickname already in use'
-                        set_nick set_nick.desired_nick+~~(Math.random()*10)
-                else if 'users' of data
-                    users = data.users
-                    users.sort()
+            el.firstChild.nodeValue = ev.new_nick
+            insert_el idx, '#chat-users p', users, el
+            users[idx...idx] = [ev.new_nick]
+            update_user_cnt()
+        else console.error 'Unable to find the user in the user list'
 
-                    frag = document.createDocumentFragment()
-                    for nick in users
-                        frag.appendChild get_user_el nick
+    on_join = (ev) ->
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has joined #{ev.chan}", 'info'
 
-                    $('#chat-users').empty().append frag
-                    update_user_cnt()
-                else if 'msgs' of data
-                    add_msgs data.msgs
-                else if 'join' of data
-                    if VERBOSE then add_msg "#{data.user} has joined #{data.join}", 'info'
-                    if data.user != user.nick
-                        idx = sortedIndex users, data.user
+        if ev.nick != irc.nick
+            idx = sortedIndex users, ev.nick
 
-                        insert_el idx, '#chat-users p', users, get_user_el data.user
-                        users[idx...idx] = [data.user]
-                        update_user_cnt()
-                else if 'part' of data
-                    if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
-                    if data.user != user.nick
-                        pos = users.indexOf data.user
-                        if ~pos
-                            users[pos..pos] = []
-                            remove_el pos, '#chat-users p'
-                            update_user_cnt()
-                        else console.error 'Unable to find the user in the user list'
-                    else
-                        users = []
-                        $('#chat-users').empty()
-                        update_user_cnt()
-                else if 'reload' of data
-                    location.reload true
-                else err = true
+            insert_el idx, '#chat-users p', users, get_user_el ev.nick
+            users[idx...idx] = [ev.nick]
+            update_user_cnt()
 
-            if err
-                add_msg 'Invalid server response', 'err'
-                console.log "Invalid server response: #{ev.data}"
+    on_part = (ev) ->
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has parted #{ev.chan} (Reason: #{ev.reason})", 'info'
+
+        if ev.nick != irc.nick
+            pos = users.indexOf ev.nick
+            if ~pos
+                users[pos..pos] = []
+                remove_el pos, '#chat-users p'
+                update_user_cnt()
+            else console.error 'Unable to find the user in the user list'
+        else
+            users = []
+            $('#chat-users').empty()
+            update_user_cnt()
+
+    on_quit = (ev) ->
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has quited (Reason: #{ev.reason})", 'info'
+
+        if ev.nick != irc.nick
+            pos = users.indexOf ev.nick
+            if ~pos
+                users[pos..pos] = []
+                remove_el pos, '#chat-users p'
+                update_user_cnt()
+            else console.error 'Unable to find the user in the user list'
+        else
+            users = []
+            $('#chat-users').empty()
+            update_user_cnt()
+
+    on_kick = (ev) ->
+        add_msg "#{ev.nick} has kicked #{ev.target} (Reason: #{ev.reason})", 'info'
+
+        if ev.target != irc.nick
+            pos = users.indexOf ev.target
+            if ~pos
+                users[pos..pos] = []
+                remove_el pos, '#chat-users p'
+                update_user_cnt()
+            else console.error 'Unable to find the user in the user list'
+        else
+            users = []
+            $('#chat-users').empty()
+            update_user_cnt()
+
+    on_users = (ev) ->
+        users = ev.nicks
+        users.sort()
+
+        frag = document.createDocumentFragment()
+        for nick in users
+            frag.appendChild get_user_el nick
+
+        $('#chat-users').empty().append frag
+        update_user_cnt()
+
+    on_msg = (ev) ->
+        add_msg "#{ev.nick}: #{ev.msg}"
+
+        if this.has_op ev.nick, ev.chan
+            if ev.msg == '!reload'
+                location.reload true
+
+    on_err = (ev) ->
+        add_msg ev.msg, 'err'
+
+        if ev.cmd == '433'
+            $('#chat-nick').val irc.nick ? localStorage.chat_nick ? ''
+            set_nick set_nick.desired_nick+~~(Math.random()*10)
 
     $('#chat-input').keydown (ev) ->
         if ev.which != 13 or ev.target.value == '' then return
@@ -144,18 +183,20 @@ $ ->
             return
 
         if msg == '/join'
-            send join: DEFAULT_CHAN
+            irc.join DEFAULT_CHAN
         else if msg == '/part'
-            send part: DEFAULT_CHAN
+            irc.part DEFAULT_CHAN
         else
-            send msg: msg, chan: DEFAULT_CHAN
+            irc.msg msg, DEFAULT_CHAN
+
+            add_msg "#{irc.nick}: #{msg}"
 
     $('#chat-nick').keydown (ev) ->
-        if ev.which != 13 or $('#chat-nick').val() == (user.nick ? null) then return
+        if ev.which != 13 or $('#chat-nick').val() == (irc.nick ? null) then return
         ev.preventDefault()
 
         if $('#chat-nick').val() == ''
-            $('#chat-nick').val user.nick ? localStorage.chat_nick ? ''
+            $('#chat-nick').val irc.nick ? localStorage.chat_nick ? ''
             $('#chat-input').focus()
             return
 
@@ -179,6 +220,9 @@ $ ->
 
     remove_el = (idx, selector) ->
         $("#{selector}:nth-child(#{idx+1})").remove()
+
+    detach_el = (idx, selector) ->
+        return $("#{selector}:nth-child(#{idx+1})").detach()[0]
 
     get_user_el = (nick) ->
         p_el = document.createElement 'p'
