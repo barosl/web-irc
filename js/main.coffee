@@ -232,7 +232,7 @@ $ ->
     update_user_cnt = ->
         chat_users_butt_el.firstChild.nodeValue = chat_users_butt_el.getAttribute('data-text').replace '{}', users.length
 
-    SCROLL_MARGIN = 30
+    SCROLL_MARGIN = 50
     is_bottom = -> ((x) -> x.scrollTop + $(x).outerHeight() + SCROLL_MARGIN >= x.scrollHeight) chat_body_el
     scroll = -> ((x) -> x.scrollTop = x.scrollHeight) chat_body_el
 
