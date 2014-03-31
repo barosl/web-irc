@@ -5,11 +5,8 @@
     <title>Chat Client</title>
     <link rel="stylesheet" href="build/css/base.css">
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="bower_components/angular/angular.min.js"></script>
-    <script src="bower_components/angular-sanitize/angular-sanitize.min.js"></script>
     <script src="cfg.js"></script>
     <script src="build/js/main.js"></script>
-    <!-- For AngularJS -->
     <!--[if lte IE 7]>
     <script src="bower_components/json3/lib/json3.min.js"></script>
     <script>var ie_7 = true;</script>
@@ -24,21 +21,19 @@
     <script>var WEB_SOCKET_SWF_LOCATION = 'bower_components/web-socket-js/WebSocketMain.swf';</script>
     <![endif]-->
 </head>
-<body id="ng-app" ng-app="chat" ng-controller="ChatCtrl">
+<body>
     <div id="chat">
         <div id="chat-header">
-            <a href="#" id="chat-users-butt">{{ users.length }} users</a>
+            <a href="#" id="chat-users-butt" data-text="{} users">0 users</a>
         </div>
         <div id="chat-body">
-            <p ng-repeat="msg in msgs track by $index" class="{{ msg.type }}" ng-bind-html="msg.msg | linky:'_blank'"></p>
         </div>
         <div id="chat-footer">
-            <input type="text" id="chat-nick" placeholder="Nickname" ng-model="nick" ng-disabled="!connected">
+            <input type="text" id="chat-nick" placeholder="Nickname" disabled>
             <span class="fill"><input type="text" id="chat-input" placeholder="Message"></span>
         </div>
 
         <div id="chat-users">
-            <p ng-repeat="user in users">{{ user }}</p>
         </div>
     </div>
 </body>

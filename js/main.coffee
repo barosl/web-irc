@@ -10,28 +10,21 @@ sortedIndex = (arr, val) ->
         if arr[mid] < val then low = mid + 1 else high = mid
     return low
 
-angular.module 'chat', ['ngSanitize']
-    .config ($sceProvider) ->
-        $sceProvider.enabled false if ie_7?
-
-    .controller 'ChatCtrl', ($scope) ->
-        $scope.init = ->
-            $scope.connected = false
-            $scope.nick = ''
-            $scope.users = []
-
-        $scope.msgs = []
-
 $ ->
-    $scope = angular.element('#chat').scope()
-
-    [sock, user] = []
+    [sock, user, connected, users] = []
     init = ->
         sock = null
         user = {}
 
-        $scope.$apply -> $scope.init()
-    init()
+        connected = false
+        $('#chat-nick').prop 'disabled', true
+
+        users = []
+        $('#chat-users').empty()
+        update_user_cnt()
+
+    chat_body_el = $('#chat-body')[0]
+    chat_users_butt_el = $('#chat-users-butt')[0]
 
     send = (data) -> sock.send JSON.stringify data
 
@@ -43,13 +36,14 @@ $ ->
         sock = new WebSocket cfg.url
 
         sock.onopen = (ev) ->
-            $scope.$apply -> $scope.connected = true
+            connected = true
+            $('#chat-nick').prop 'disabled', false
 
             add_msg 'Successfully connected', 'info'
 
             nick = localStorage.chat_nick ? ''
             set_nick nick
-            $scope.$apply -> $scope.nick = nick
+            $('#chat-nick').val nick
 
         sock.onclose = (ev) ->
             init()
@@ -75,43 +69,60 @@ $ ->
                     if data.user
                         if VERBOSE then add_msg "#{data.user} is now known as #{data.nick}", 'info'
                         else add_msg "#{data.user} -> #{data.nick}", 'info'
-                        $scope.$apply ->
-                            pos = $scope.users.indexOf data.user
-                            if ~pos
-                                $scope.users[pos..pos] = []
-                                idx = sortedIndex($scope.users, data.nick)
-                                $scope.users[idx...idx] = [data.nick]
-                            else console.error 'Unable to find the user in the user list'
+
+                        pos = users.indexOf data.user
+                        if ~pos
+                            users[pos..pos] = []
+                            remove_el pos, '#chat-users p'
+
+                            idx = sortedIndex users, data.nick
+
+                            insert_el idx, '#chat-users p', users, get_user_el data.nick
+                            users[idx...idx] = [data.nick]
+                            update_user_cnt()
+                        else console.error 'Unable to find the user in the user list'
                     else
                         user.nick = data.nick
-                        $scope.$apply -> $scope.nick = user.nick
+                        $('#chat-nick').val user.nick
                 else if 'err' of data
-                    $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick
+                    $('#chat-nick').val user.nick ? localStorage.chat_nick
                     add_msg data.err, 'err'
 
                     if data.err == 'Nickname already in use'
                         set_nick set_nick.desired_nick+~~(Math.random()*10)
                 else if 'users' of data
-                    $scope.$apply ->
-                        $scope.users = data.users
-                        $scope.users.sort()
+                    users = data.users
+                    users.sort()
+
+                    frag = document.createDocumentFragment()
+                    for nick in users
+                        frag.appendChild get_user_el nick
+
+                    $('#chat-users').empty().append frag
+                    update_user_cnt()
                 else if 'msgs' of data
                     add_msgs data.msgs
                 else if 'join' of data
                     if VERBOSE then add_msg "#{data.user} has joined #{data.join}", 'info'
                     if data.user != user.nick
-                        $scope.$apply ->
-                            idx = sortedIndex($scope.users, data.user)
-                            $scope.users[idx...idx] = [data.user]
+                        idx = sortedIndex users, data.user
+
+                        insert_el idx, '#chat-users p', users, get_user_el data.user
+                        users[idx...idx] = [data.user]
+                        update_user_cnt()
                 else if 'part' of data
                     if VERBOSE then add_msg "#{data.user} has parted #{data.part}", 'info'
                     if data.user != user.nick
-                        $scope.$apply ->
-                            pos = $scope.users.indexOf data.user
-                            if ~pos then $scope.users[pos..pos] = []
-                            else console.error 'Unable to find the user in the user list'
+                        pos = users.indexOf data.user
+                        if ~pos
+                            users[pos..pos] = []
+                            remove_el pos, '#chat-users p'
+                            update_user_cnt()
+                        else console.error 'Unable to find the user in the user list'
                     else
-                        $scope.$apply -> $scope.users = []
+                        users = []
+                        $('#chat-users').empty()
+                        update_user_cnt()
                 else if 'reload' of data
                     location.reload true
                 else err = true
@@ -125,10 +136,10 @@ $ ->
         ev.preventDefault()
         [msg, ev.target.value] = [ev.target.value, '']
 
-        msg = $.trim(msg)
+        msg = $.trim msg
         if not msg then return
 
-        if not $scope.connected
+        if not connected
             add_msg 'Not connected', 'err'
             return
 
@@ -140,19 +151,17 @@ $ ->
             send msg: msg, chan: DEFAULT_CHAN
 
     $('#chat-nick').keydown (ev) ->
-        if ev.which != 13 or $scope.nick == (user.nick ? null) then return
+        if ev.which != 13 or $('#chat-nick').val() == (user.nick ? null) then return
         ev.preventDefault()
 
-        ###
-        if $scope.nick == ''
-            $scope.$apply -> $scope.nick = user.nick ? localStorage.chat_nick ? ''
+        if $('#chat-nick').val() == ''
+            $('#chat-nick').val user.nick ? localStorage.chat_nick ? ''
             $('#chat-input').focus()
             return
-        ###
 
-        set_nick $scope.nick
+        set_nick $('#chat-nick').val()
 
-        localStorage.chat_nick = $scope.nick
+        localStorage.chat_nick = $('#chat-nick').val()
 
         localStorage.update() if ie_7?
 
@@ -162,18 +171,43 @@ $ ->
         ev.preventDefault()
         $('#chat-users').toggle()
 
-    is_bottom = -> ((x) -> x.scrollTop + $(x).outerHeight() == x.scrollHeight) $('#chat-body')[0]
-    scroll = -> ((x) -> x.scrollTop = x.scrollHeight) $('#chat-body')[0]
+    insert_el = (idx, selector, list, el) ->
+        if idx != list.length
+            $("#{selector}:nth-child(#{idx+1})").before el
+        else
+            $("#{selector}:nth-child(#{idx})").after el
+
+    remove_el = (idx, selector) ->
+        $("#{selector}:nth-child(#{idx+1})").remove()
+
+    get_user_el = (nick) ->
+        p_el = document.createElement 'p'
+        p_el.appendChild document.createTextNode nick
+        return p_el
+
+    update_user_cnt = ->
+        chat_users_butt_el.firstChild.nodeValue = chat_users_butt_el.getAttribute('data-text').replace '{}', users.length
+
+    is_bottom = -> ((x) -> x.scrollTop + $(x).outerHeight() == x.scrollHeight) chat_body_el
+    scroll = -> ((x) -> x.scrollTop = x.scrollHeight) chat_body_el
+
+    get_msg_el = (msg, type) ->
+        p_el = document.createElement 'p'
+        p_el.appendChild document.createTextNode msg
+        p_el.className = type
+        return p_el
 
     add_msg = (msg, type='normal') ->
         flag = is_bottom()
-        $scope.$apply -> $scope.msgs.push type: type, msg: msg
+        chat_body_el.appendChild get_msg_el msg, type
         if flag then scroll()
 
     add_msgs = (msgs) ->
         flag = is_bottom()
-        $scope.$apply -> Array::push.apply $scope.msgs, (type: 'normal', msg: x for x in msgs)
+        for msg in msgs
+            add_msg msg
         if flag then scroll()
 
+    init()
     conn()
     $('#chat-input').focus()
