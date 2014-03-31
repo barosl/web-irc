@@ -157,7 +157,7 @@ $ ->
         update_user_cnt()
 
     on_msg = (ev) ->
-        add_msg "#{ev.nick}: #{ev.msg}"
+        add_msg {msg: ev.msg, nick: ev.nick}
 
         if this.has_op ev.nick, ev.chan
             if ev.msg == '!reload'
@@ -189,7 +189,7 @@ $ ->
         else
             irc.msg msg, DEFAULT_CHAN
 
-            add_msg "#{irc.nick}: #{msg}"
+            add_msg {msg: msg, nick: irc.nick}, 'my'
 
     $('#chat-nick').keydown (ev) ->
         if ev.which != 13 or $('#chat-nick').val() == (irc.nick ? null) then return
@@ -238,8 +238,23 @@ $ ->
 
     get_msg_el = (msg, type) ->
         p_el = document.createElement 'p'
-        p_el.appendChild document.createTextNode msg
         p_el.className = type
+
+        if typeof msg == 'string'
+            p_el.appendChild document.createTextNode msg
+        else
+            nick_el = document.createElement 'span'
+            nick_el.className = 'nick'
+            nick_el.appendChild document.createTextNode msg.nick
+
+            msg_el = document.createElement 'span'
+            msg_el.className = 'msg'
+            msg_el.appendChild document.createTextNode msg.msg
+
+            p_el.appendChild nick_el
+            p_el.appendChild document.createTextNode ': '
+            p_el.appendChild msg_el
+
         return p_el
 
     add_msg = (msg, type='normal') ->
