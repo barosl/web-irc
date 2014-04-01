@@ -1,4 +1,6 @@
 RECONN_SECS = 5
+SCROLLBACK_BUFFER_SIZE = 2000
+
 DEFAULT_CHAN = if mat = /[?&]chan=([^&]+)/.exec location.search then '#'+mat[1] else '#default'
 VERBOSE = /[?&]verbose=(true|1)&?/.test location.search
 
@@ -259,7 +261,17 @@ $ ->
 
     add_msg = (msg, type='normal') ->
         flag = is_bottom()
+
+        while chat_body_el.childNodes.length > SCROLLBACK_BUFFER_SIZE - 1
+            if not flag
+                chat_body_el.scrollTop -= \
+                    chat_body_el.childNodes[1].offsetTop \
+                    - chat_body_el.firstChild.offsetTop
+
+            chat_body_el.removeChild chat_body_el.firstChild
+
         chat_body_el.appendChild get_msg_el msg, type
+
         if flag then scroll()
 
     add_msgs = (msgs) ->
