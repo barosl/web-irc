@@ -238,12 +238,16 @@ $ ->
     is_bottom = -> ((x) -> x.scrollTop + $(x).outerHeight() + SCROLL_MARGIN >= x.scrollHeight) chat_body_el
     scroll = -> ((x) -> x.scrollTop = x.scrollHeight) chat_body_el
 
+    linkify = (text) ->
+        return text.replace /((https?|ftp|mailto|magnet):[^\s()]+)/g, '<a href="$1" target="_blank">$1</a>'
+
     get_msg_el = (msg, type) ->
         p_el = document.createElement 'p'
         p_el.className = type
 
         if typeof msg == 'string'
             p_el.appendChild document.createTextNode msg
+            p_el.innerHTML = linkify p_el.innerHTML
         else
             nick_el = document.createElement 'span'
             nick_el.className = 'nick'
@@ -252,6 +256,7 @@ $ ->
             msg_el = document.createElement 'span'
             msg_el.className = 'msg'
             msg_el.appendChild document.createTextNode msg.msg
+            msg_el.innerHTML = linkify msg_el.innerHTML
 
             p_el.appendChild nick_el
             p_el.appendChild document.createTextNode ': '
