@@ -13,7 +13,7 @@ sortedIndex = (arr, val) ->
     return low
 
 $ ->
-    [sock, connected, users, irc] = []
+    [sock, connected, users, users_k, irc] = []
     init = ->
         sock = null
 
@@ -26,6 +26,7 @@ $ ->
             quit: on_quit
             kick: on_kick
             users: on_users
+            mode: on_mode
             msg: on_msg
             err: on_err
 
@@ -33,6 +34,7 @@ $ ->
         $('#chat-nick').prop 'disabled', true
 
         users = []
+        users_k = []
         $('#chat-users').empty()
         update_user_cnt()
 
@@ -82,24 +84,28 @@ $ ->
         pos = users.indexOf ev.nick
         if ~pos
             users[pos..pos] = []
+            users_k[pos..pos] = []
             el = detach_el pos, '#chat-users p'
 
-            idx = sortedIndex users, ev.new_nick
+            label = +(el.className != 'o')
+            idx = sortedIndex users_k, label + ev.new_nick.toLowerCase()
 
-            el.firstChild.nodeValue = ev.new_nick
+            el.firstChild.firstChild.nodeValue = ev.new_nick
             insert_el idx, '#chat-users p', users, el
             users[idx...idx] = [ev.new_nick]
-            update_user_cnt()
+            users_k[idx...idx] = [label + ev.new_nick.toLowerCase()]
         else console.error 'Unable to find the user in the user list'
 
     on_join = (ev) ->
         if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has joined #{ev.chan}", 'info'
 
         if ev.nick != irc.nick
-            idx = sortedIndex users, ev.nick
+            label = 1
+            idx = sortedIndex users_k, label + ev.nick.toLowerCase()
 
             insert_el idx, '#chat-users p', users, get_user_el ev.nick
             users[idx...idx] = [ev.nick]
+            users_k[idx...idx] = [label + ev.nick.toLowerCase()]
             update_user_cnt()
 
     on_part = (ev) ->
@@ -109,11 +115,13 @@ $ ->
             pos = users.indexOf ev.nick
             if ~pos
                 users[pos..pos] = []
+                users_k[pos..pos] = []
                 remove_el pos, '#chat-users p'
                 update_user_cnt()
             else console.error 'Unable to find the user in the user list'
         else
             users = []
+            users_k = []
             $('#chat-users').empty()
             update_user_cnt()
 
@@ -124,11 +132,13 @@ $ ->
             pos = users.indexOf ev.nick
             if ~pos
                 users[pos..pos] = []
+                users_k[pos..pos] = []
                 remove_el pos, '#chat-users p'
                 update_user_cnt()
             else console.error 'Unable to find the user in the user list'
         else
             users = []
+            users_k = []
             $('#chat-users').empty()
             update_user_cnt()
 
@@ -139,29 +149,72 @@ $ ->
             pos = users.indexOf ev.target
             if ~pos
                 users[pos..pos] = []
+                users_k[pos..pos] = []
                 remove_el pos, '#chat-users p'
                 update_user_cnt()
             else console.error 'Unable to find the user in the user list'
         else
             users = []
+            users_k = []
             $('#chat-users').empty()
             update_user_cnt()
 
     on_users = (ev) ->
-        users = ev.nicks
-        users.sort()
+        users = []
+        users_k = []
 
         frag = document.createDocumentFragment()
-        for nick in users
-            frag.appendChild get_user_el nick
+
+        for nick in ev.nicks
+            mode = irc.get_mode ev.chan, nick
+
+            label = +(mode != 'o')
+            idx = sortedIndex users_k, label + nick.toLowerCase()
+
+            el = get_user_el nick, mode
+            if idx != frag.childNodes.length
+                frag.insertBefore el, frag.childNodes[idx]
+            else
+                frag.appendChild el
+
+            users[idx...idx] = [nick]
+            users_k[idx...idx] = [label + nick.toLowerCase()]
 
         $('#chat-users').empty().append frag
         update_user_cnt()
 
-    on_msg = (ev) ->
-        add_msg {msg: ev.msg, nick: ev.nick}
+    on_mode = (ev) ->
+        for mode in ev.modes
+            if mode[0] != 'o' then continue
 
-        if this.has_op ev.nick, ev.chan
+            nick = mode[1]
+
+            pos = users.indexOf nick
+            if ~pos
+                mode = irc.get_mode ev.chan, nick
+
+                prev_label = +($('#chat-users')[0].childNodes[pos].className != 'o')
+                label = +(mode != 'o')
+
+                if prev_label != label
+                    users[pos..pos] = []
+                    users_k[pos..pos] = []
+                    el = detach_el pos, '#chat-users p'
+
+                    el.className = mode
+
+                    idx = sortedIndex users_k, label + nick.toLowerCase()
+
+                    insert_el idx, '#chat-users p', users, el
+                    users[idx...idx] = [nick]
+                    users_k[idx...idx] = [label + nick.toLowerCase()]
+
+    on_msg = (ev) ->
+        mode = irc.get_mode ev.chan, ev.nick
+
+        add_msg {msg: ev.msg, nick: ev.nick}, mode
+
+        if mode == 'o'
             if ev.msg == '!reload'
                 location.reload true
 
@@ -191,7 +244,7 @@ $ ->
         else
             irc.msg msg, DEFAULT_CHAN
 
-            add_msg {msg: msg, nick: irc.nick}, 'my'
+            add_msg {msg: msg, nick: irc.nick}, 'my ' + irc.get_mode DEFAULT_CHAN, irc.nick
 
     $('#chat-nick').keydown (ev) ->
         if ev.which != 13 or $('#chat-nick').val() == (irc.nick ? null) then return
@@ -226,9 +279,13 @@ $ ->
     detach_el = (idx, selector) ->
         return $("#{selector}:nth-child(#{idx+1})").detach()[0]
 
-    get_user_el = (nick) ->
+    get_user_el = (nick, type) ->
+        span_el = document.createElement 'span'
+        span_el.appendChild document.createTextNode nick
+
         p_el = document.createElement 'p'
-        p_el.appendChild document.createTextNode nick
+        p_el.className = type
+        p_el.appendChild span_el
         return p_el
 
     update_user_cnt = ->
