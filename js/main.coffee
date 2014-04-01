@@ -241,6 +241,16 @@ $ ->
             irc.join DEFAULT_CHAN
         else if msg == '/part'
             irc.part DEFAULT_CHAN
+        else if msg[0] == '/'
+            params = msg[1..].match /\S+/g
+            if not params then return
+
+            [cmd, params] = [params[0], params[1..]]
+
+            if cmd == 'j' then cmd = 'join'
+            else if cmd == 'p' then cmd = 'part'
+
+            irc.send cmd, params
         else
             irc.msg msg, DEFAULT_CHAN
 
