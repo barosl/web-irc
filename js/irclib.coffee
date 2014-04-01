@@ -114,12 +114,21 @@ this.irclib =
             else if cmd == 'quit'
                 reason = if params.length > 0 then params[0] else ''
 
+                if nick == @nick
+                    @chans = {}
+                    @modes = {}
+
                 @emit 'quit', {prefix: prefix, nick: nick, reason: reason}
 
             else if cmd == 'kick'
+                chan = params[0].toLowerCase()
                 reason = if params.length > 2 then params[2] else ''
 
-                @emit 'kick', {prefix: prefix, nick: nick, chan: params[0], target: params[1], reason: reason}
+                if nick == @nick
+                    delete @chans[chan]
+                    delete @modes[chan]
+
+                @emit 'kick', {prefix: prefix, nick: nick, chan: chan, target: params[1], reason: reason}
 
             else if cmd == 'nick'
                 new_nick = params[0]
