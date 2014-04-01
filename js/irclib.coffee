@@ -175,6 +175,8 @@ this.irclib =
                 mode_params = params[2..]
                 mode_param_idx = 0
 
+                if chan[0] != '#' then return
+
                 [sign, modes_l] = [modes_s[0] == '+', modes_s[1..]]
 
                 modes = []
