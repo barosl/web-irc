@@ -109,7 +109,7 @@ $ ->
             update_user_cnt()
 
     on_part = (ev) ->
-        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has parted #{ev.chan} (Reason: #{ev.reason})", 'warn'
+        if VERBOSE or ev.nick == irc.nick then add_msg "#{ev.nick} has left #{ev.chan} (Reason: #{ev.reason})", 'warn'
 
         if ev.nick != irc.nick
             pos = users.indexOf ev.nick
