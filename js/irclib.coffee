@@ -84,30 +84,32 @@ this.irclib =
                 @emit 'msg', {prefix: prefix, nick: nick, chan: params[0], msg: params[1]}
 
             else if cmd == 'join'
-                chan = params[0].toLowerCase()
+                chan = params[0]
+                chan_k = chan.toLowerCase()
 
                 if nick != @nick
-                    pos = sortedIndex @chans[chan], nick
-                    @chans[chan][pos...pos] = [nick]
-                    @modes[chan][nick] = ''
+                    pos = sortedIndex @chans[chan_k], nick
+                    @chans[chan_k][pos...pos] = [nick]
+                    @modes[chan_k][nick] = ''
                 else
-                    @chans[chan] = []
-                    @modes[chan] = {}
+                    @chans[chan_k] = []
+                    @modes[chan_k] = {}
 
                 @emit 'join', {prefix: prefix, nick: nick, chan: chan}
 
             else if cmd == 'part'
-                chan = params[0].toLowerCase()
+                chan = params[0]
+                chan_k = chan.toLowerCase()
                 reason = if params.length > 1 then params[1] else ''
 
                 if nick != @nick
-                    pos = @chans[chan].indexOf nick
+                    pos = @chans[chan_k].indexOf nick
                     if ~pos
-                        @chans[chan][pos..pos] = []
-                        delete @modes[chan][nick]
+                        @chans[chan_k][pos..pos] = []
+                        delete @modes[chan_k][nick]
                 else
-                    delete @chans[chan]
-                    delete @modes[chan]
+                    delete @chans[chan_k]
+                    delete @modes[chan_k]
 
                 @emit 'part', {prefix: prefix, nick: nick, chan: chan, reason: reason}
 
@@ -121,12 +123,13 @@ this.irclib =
                 @emit 'quit', {prefix: prefix, nick: nick, reason: reason}
 
             else if cmd == 'kick'
-                chan = params[0].toLowerCase()
+                chan = params[0]
+                chan_k = chan.toLowerCase()
                 reason = if params.length > 2 then params[2] else ''
 
                 if nick == @nick
-                    delete @chans[chan]
-                    delete @modes[chan]
+                    delete @chans[chan_k]
+                    delete @modes[chan_k]
 
                 @emit 'kick', {prefix: prefix, nick: nick, chan: chan, target: params[1], reason: reason}
 
@@ -153,6 +156,7 @@ this.irclib =
 
             else if cmd == 'mode'
                 chan = params[0]
+                chan_k = chan.toLowerCase()
                 modes_s = params[1]
                 mode_params = params[2..]
                 mode_param_idx = 0
@@ -163,8 +167,8 @@ this.irclib =
                     mode_param = if mode in 'ov' then mode_params[mode_param_idx++] else null
 
                     if mode == 'o'
-                        if @modes[chan][mode_param] != 'o' or mode == 'o'
-                            @modes[chan][mode_param] = if sign then mode else ''
+                        if @modes[chan_k][mode_param] != 'o' or mode == 'o'
+                            @modes[chan_k][mode_param] = if sign then mode else ''
 
             else if cmd == 'ping'
                 @send 'pong', params
@@ -178,7 +182,8 @@ this.irclib =
                 @emit 'err', {cmd: cmd, msg: params[2]}
 
             else if cmd == '353'
-                chan = params[2].toLowerCase()
+                chan = params[2]
+                chan_k = chan.toLowerCase()
                 nicks_s = params[3]
 
                 regexp = /([@+])?(\S+)/g
@@ -186,14 +191,15 @@ this.irclib =
                     mode = mat[1]
                     nick = mat[2]
 
-                    pos = sortedIndex @chans[chan], nick
-                    @chans[chan][pos...pos] = [nick]
-                    @modes[chan][nick] = if mode == '@' then 'o' else if mode == '+' then 'v' else ''
+                    pos = sortedIndex @chans[chan_k], nick
+                    @chans[chan_k][pos...pos] = [nick]
+                    @modes[chan_k][nick] = if mode == '@' then 'o' else if mode == '+' then 'v' else ''
 
             else if cmd == '366'
-                chan = params[1].toLowerCase()
+                chan = params[1]
+                chan_k = chan.toLowerCase()
 
-                @emit 'users', {chan: chan, nicks: @chans[chan][..]}
+                @emit 'users', {chan: chan, nicks: @chans[chan_k][..]}
 
             else
                 console.warn 'Invalid server response: '+line
