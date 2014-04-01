@@ -212,7 +212,8 @@ $ ->
     on_msg = (ev) ->
         mode = irc.get_mode ev.chan, ev.nick
 
-        add_msg {msg: ev.msg, nick: ev.nick}, mode
+        if irc.nick2ip[ev.nick.toLowerCase()] not in ignores
+            add_msg {msg: ev.msg, nick: ev.nick}, mode
 
         if mode == 'o'
             if ev.msg == '!reload'
@@ -250,6 +251,10 @@ $ ->
             if cmd == 'j' then cmd = 'join'
             else if cmd == 'p' then cmd = 'part'
 
+            if cmd in ['ignore', '무시', 'mute', '차단']
+                on_ignore params
+                return
+
             irc.send cmd, params
         else
             irc.msg msg, DEFAULT_CHAN
@@ -268,7 +273,6 @@ $ ->
         set_nick $('#chat-nick').val()
 
         localStorage.chat_nick = $('#chat-nick').val()
-
         localStorage.update() if ie_7?
 
         $('#chat-input').focus()
@@ -351,6 +355,71 @@ $ ->
         for msg in msgs
             add_msg msg
         if flag then scroll()
+
+    ignores = []
+    ignore_nicks = []
+
+    ignore_init = ->
+        try
+            ignores = JSON.parse localStorage.ignores
+            ignore_nicks = JSON.parse localStorage.ignore_nicks
+        catch
+            ignores = []
+            ignore_nicks = []
+
+    ignore_init()
+
+    on_ignore = (params) ->
+        if not params.length
+            add_msg "Current ignore list(#{ignores.length} items):", 'info'
+            for ip_addr, i in ignores
+                add_msg "#{ignore_nicks[i]} (#{ip_addr})", 'warn'
+            add_msg 'To remove an entry, type "/ignore IP Address"', 'err'
+            add_msg 'To clear the entire list, type "/ignore *"', 'err'
+            return
+
+        nick = params[0]
+
+        if nick == '*'
+            delete localStorage.ignores
+            delete localStorage.ignore_nicks
+            localStorage.update() if ie_7?
+
+            ignores = []
+            ignore_nicks = []
+
+            add_msg 'Ignore list cleared', 'info'
+            return
+
+        if ''+(+nick[0]) == nick[0]
+            i = -1
+            while ++i < ignores.length
+                if ignores[i] == nick
+                    add_msg "Removed #{ignore_nicks[i]} (#{ignores[i]}) from the ignore list", 'info'
+
+                    ignores[i..i] = []
+                    ignore_nicks[i..i] = []
+
+                    i--
+
+        else
+            ip_addr = irc.nick2ip[nick.toLowerCase()]
+            if not ip_addr
+                add_msg 'Nickname not found', 'err'
+                return
+
+            if ''+(+ip_addr[0]) != ip_addr[0]
+                add_msg 'Invalid IP address', 'err'
+                return
+
+            ignores.push ip_addr
+            ignore_nicks.push nick
+
+            add_msg "Added #{nick} (#{ip_addr}) to your ignore list", 'info'
+
+        localStorage.ignores = JSON.stringify ignores
+        localStorage.ignore_nicks = JSON.stringify ignore_nicks
+        localStorage.update() if ie_7?
 
     init()
     conn()

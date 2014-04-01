@@ -48,6 +48,7 @@ this.irclib =
             @nicks = {}
             @nicks_k = {}
             @modes = {}
+            @nick2ip = {}
 
         emit: (type, ev={}) ->
             funcs = @handlers[type]
@@ -80,7 +81,13 @@ this.irclib =
                 if prefix and '!' in prefix
                     nick = prefix[...prefix.indexOf('!')]
                 else nick = null
+
+                if prefix and '@' in prefix
+                    ip_addr = prefix[prefix.indexOf('@')+1..]
+                else ip_addr = null
             else cmd = null
+
+            if ip_addr then @nick2ip[nick.toLowerCase()] = ip_addr
 
             if cmd == 'privmsg'
                 @emit 'msg', {prefix: prefix, nick: nick, chan: params[0], msg: params[1]}
