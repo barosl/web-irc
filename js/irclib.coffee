@@ -23,12 +23,12 @@ parse_irc_msg = (msg) ->
 
     return [prefix, cmd, params]
 
-get_irc_msg = (cmd, params, prefix=null) ->
+get_irc_msg = (cmd, params=[], prefix=null) ->
     return \
         (if prefix then ':'+prefix+' ' else '') \
         + cmd.toUpperCase() \
         + (' ' +
-            if params
+            if params and params.length
             then (params[...-1].concat(
                 if ' ' in params[params.length-1]
                 then ':'+params[params.length-1]
@@ -62,7 +62,7 @@ this.irclib =
             for type, func of funcs
                 @add_handler type, func
 
-        send: (cmd, params, prefix=null) ->
+        send: (cmd, params=[], prefix=null) ->
             @sender get_irc_msg cmd, params, prefix
 
         parse: (buf) ->
